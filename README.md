@@ -6,6 +6,7 @@ Each column is a migragtion from one population to another with the diagonals th
 rate for one population to itself
 
 1->1,1->2,2->1,2->2
+
 0,5e-4,5e-4,0
 
 Format for the sampling times file specified by -t option
