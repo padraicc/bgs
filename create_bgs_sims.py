@@ -92,9 +92,6 @@ def mkdir(model):
 		pass
 	
 
-## commandline for the final script should look like the following
-## python create_bgs_sims.py -n 500 -r 25 -N 1000,2000 -t  -u 1e-05,1e-06 -c 0 -s 1e-05,1e-04 -m migration_rates.txt -l 5000 -i S[0-4999,0] -g 0 -p 0.25 -t sampling_times.txt 
-
 parser = OptionParser()
 parser.add_option('-J', help='Path to the Java jdk files needed for running the jar files', dest='java_path')
 parser.add_option('-j', help='Path to the jar files that perform the simulations', dest='jar_path')
