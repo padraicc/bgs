@@ -76,18 +76,19 @@ def write_java_commands(java_path, jar_path):
 	java_command_file.close()
 
 
-def write_qsub(time, control_names, error_log_path, out_log_path, reps, qsub_outfile, full_path):
+def write_qsub(time, control_names, error_log_path, out_log_path, reps, qsub_outfile, control_path):
 	out = open(qsub_outfile, 'w')
 	out.write('#!/bin/bash')
 	out.write('\n')
 	for i in control_names:
 		out.write('qsub -l mem=5G -l arch=intel* -l h_rt=%s:00:00 -N %s -e %s/%s.e -o %s/%s.o -t 1-%s -cwd GetTreeSeqTwoDemeConst.sh 1000m %s\n' 
-		% (time, i.split('/')[0], error_log_path, i.split('/')[0], out_log_path, i.split('/')[0], reps,  full_path + i))	 
+		% (time, i.split('/')[1][:-4], error_log_path, i.split('/')[1][:-4], out_log_path, 
+		i.split('/')[1][:-4], reps,  control_path + '/' + i))	 
 	out.close()
 
-def mkdir(model):
+def mkdir(control_path, model):
 	try:
-		os.makedirs('m' + str(model))
+		os.makedirs(control_path + '/' + 'm' + str(model))
 	except OSError:
 		pass
 	
@@ -108,6 +109,7 @@ parser.add_option('-i', help='Sites in the region subject to selection. The sele
 parser.add_option('-g', help='site whose genealogy is recorded. Note All sites have same genealogy when recombination is zero (-c 0)', dest='tree_site', default='')
 parser.add_option('-p', help='Frequency at which deleterious mutations that have fixed are purged (purging is every purge_freq*pop_size generations)', dest='purge_freq', default='')
 parser.add_option('-t', help='File specifying the generations where samples of size specified by -n parameter are taken', dest='sample_times')
+parser.add_option('-d', help='Path where the control files should be written', dest='control_path')
 parser.add_option('-w', '--write', help='Write simulated sequence data to file', dest='write_seq', default=False, action='store_true')
 parser.add_option('-x', '--execute', help='Submit the created array jobs to the cluster', dest='run_job', default=False, action='store_true')
 parser.add_option('-o', '--stdout', help='Path to write stdout from program', dest='model_out') # make this a mandatory requirement or defualt to current directory
@@ -138,25 +140,25 @@ def main():
 		if len(usq_models) == 0: 
 			usq_models.append(usq)
 			model_sub_num.append(model_num)
-			mkdir(str(model_num))
+			mkdir(opts.control_path , str(model_num))
 		else:
 			if usq not in usq_models:
 				usq_models.append(usq)
 				model_num += 1
 				model_sub_num.append(model_num)
-				mkdir(str(model_num))
+				mkdir(opts.control_path , str(model_num))
 			else:
 				model_num = usq_models.index(usq) + 1
 				model_sub_num.append(model_num)
-				mkdir(str(model_num))
+				mkdir(opts.control_path , str(model_num))
 				
 		num = model_sub_num.count(model_num)
-		control_file_name = write_control_file(i, model_num, num, save_seq, 'm' + str(model_num)) # write the control files
+		control_file_name = write_control_file(i, model_num, num, save_seq, opts.control_path + '/' + 'm' + str(model_num)) # write the control files
 		control_file_names.append('m' + str(model_num) + '/' + control_file_name)
 		
 	write_java_commands(opts.java_path, opts.jar_path)
 	
-	write_qsub(opts.job_time,  control_file_names, opts.error_out, opts.model_out, opts.nreps, opts.qsub_file, script_dir)
+	write_qsub(opts.job_time,  control_file_names, opts.error_out, opts.model_out, opts.nreps, opts.qsub_file, opts.control_path)
 		
 	
 	if opts.run_job: # submit jobs if the -x flag is included
