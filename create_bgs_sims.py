@@ -129,7 +129,7 @@ parser.add_option('-p', help='Frequency at which deleterious mutations that have
 parser.add_option('-t', help='File specifying the generations where samples of size specified by -n parameter are taken', dest='sample_times')
 parser.add_option('-d', help='Path where the control files should be written', dest='control_path')
 parser.add_option('-w', '--write', help='Write simulated sequence data to file', dest='write_seq', default=False, action='store_true')
-parser.add_option('-x', '--execute', help='Submit the created array jobs to the cluster', dest='run_job', default=False, action='store_true')
+parser.add_option('-x', '--execute', help='Submit the created array jobs to the cluster. Warning: this will overwrite simulation results located in -d with the same name ', dest='run_job', default=False, action='store_true')
 parser.add_option('-o', '--stdout', help='Path to write stdout from program', dest='model_out') # make this a mandatory requirement or defualt to current directory
 parser.add_option('-e', '--error', help='Path to write errors files from qsub job', dest='error_out')
 parser.add_option('-f', '--file', help='Name of the qsub  batch submission script that is output', dest='qsub_file', default='sub.sh' )
