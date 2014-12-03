@@ -107,7 +107,7 @@ def write_parser(time, control_names, error_log_path, out_log_path, qsub_outfile
 	for i in control_names:
 		name = i.split('/')[1][:-4]
 		parser_out.write('qsub -l mem=8G -l arch=intel* -l h_rt=%s:00:00 -N %s -e %s/%s.parse.e -o %s/%s.parse.o -cwd extract_treestats.sh %s\n'
-	% (time, name, error_log_path, name, out_log_path, name, control_path + '/' + name))
+	% (time, name, error_log_path, name, out_log_path, name, control_path + '/' + i))
 	parser_out.close()
 	
 
