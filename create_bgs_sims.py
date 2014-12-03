@@ -91,6 +91,18 @@ def mkdir(control_path, model):
 		os.makedirs(control_path + '/' + 'm' + str(model))
 	except OSError:
 		pass
+
+def write_extract_treestat(java_path, jar_path):
+	#%s -XX:+AggressiveOpts -cp .:%s/common.jar:%s/bithap.jar:%s/bgs.jar analysis.ParseGetTreeSeqTwoDemeConst tree_stat $1
+	extract_treestat = open('extract_treestats.sh', 'w')
+	extract_treestat.write('%s -XX:+AggressiveOpts -cp .:%s/common.jar:%s/bithap.jar:%s/bgs.jar analysis.ParseGetTreeSeqTwoDemeConst tree_stat $1\n'
+	 % (java_path, jar_path, jar_path, jar_path))
+	extract_treestat.close()
+	
+def write_parser():
+	
+	pass
+
 	
 
 parser = OptionParser()
@@ -159,7 +171,8 @@ def main():
 	write_java_commands(opts.java_path, opts.jar_path)
 	
 	write_qsub(opts.job_time,  control_file_names, opts.error_out, opts.model_out, opts.nreps, opts.qsub_file, opts.control_path)
-		
+	
+	write_extract_treestat(opts.java_path, opts.jar_path)	
 	
 	if opts.run_job: # submit jobs if the -x flag is included
 		qsub_file = opts.qsub_file
