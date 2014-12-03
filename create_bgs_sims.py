@@ -78,7 +78,7 @@ def write_java_commands(java_path, jar_path):
 
 def write_qsub(time, control_names, error_log_path, out_log_path, reps, qsub_outfile, control_path):
 	out = open(qsub_outfile, 'w')
-	out.write('#!/bin/bash')
+	out.write('#!/bin/bash\n')
 	out.write('\n')
 	for i in control_names:
 		out.write('qsub -l mem=5G -l arch=intel* -l h_rt=%s:00:00 -N %s -e %s/%s.e -o %s/%s.o -t 1-%s -cwd GetTreeSeqTwoDemeConst.sh 1000m %s\n' 
@@ -89,20 +89,26 @@ def write_qsub(time, control_names, error_log_path, out_log_path, reps, qsub_out
 def mkdir(control_path, model):
 	try:
 		os.makedirs(control_path + '/' + 'm' + str(model))
-	except OSError:
+	except OSError: # Do nothing if the control file folder already exists. Does not write over existing simulation results
 		pass
 
 def write_extract_treestat(java_path, jar_path):
-	#%s -XX:+AggressiveOpts -cp .:%s/common.jar:%s/bithap.jar:%s/bgs.jar analysis.ParseGetTreeSeqTwoDemeConst tree_stat $1
 	extract_treestat = open('extract_treestats.sh', 'w')
 	extract_treestat.write('%s -XX:+AggressiveOpts -cp .:%s/common.jar:%s/bithap.jar:%s/bgs.jar analysis.ParseGetTreeSeqTwoDemeConst tree_stat $1\n'
 	 % (java_path, jar_path, jar_path, jar_path))
 	extract_treestat.close()
 	
-def write_parser():
-	
-	pass
-
+def write_parser(time, control_names, error_log_path, out_log_path, qsub_outfile, control_path):
+#qsub -l mem=8G -l arch=intel* -l h_rt=8:00:00 -N $n1 -e $dir/$n1.err -o $dir/$n2.o -cwd extract_treestats.sh $n1
+	outfile = 'parse.' + qsub_outfile
+	parser_out = open(outfile, 'w')
+	parser_out.write('#!/bin/bash\n')
+	parser_out.write('\n')
+	for i in control_names:
+		name = i.split('/')[1][:-4]
+		parser_out.write('qsub -l mem=8G -l arch=intel* -l h_rt=%s:00:00 -N %s -e %s/%s.parse.e -o %s/%s.parse.o -cwd extract_treestats.sh %s\n'
+	% (time, name, error_log_path, name, out_log_path, name, control_path + '/' + name))
+	parser_out.close()
 	
 
 parser = OptionParser()
@@ -172,7 +178,9 @@ def main():
 	
 	write_qsub(opts.job_time,  control_file_names, opts.error_out, opts.model_out, opts.nreps, opts.qsub_file, opts.control_path)
 	
-	write_extract_treestat(opts.java_path, opts.jar_path)	
+	write_extract_treestat(opts.java_path, opts.jar_path)
+	
+	write_parser(opts.job_time, control_file_names, opts.error_out, opts.model_out, opts.qsub_file, opts.control_path)
 	
 	if opts.run_job: # submit jobs if the -x flag is included
 		qsub_file = opts.qsub_file
