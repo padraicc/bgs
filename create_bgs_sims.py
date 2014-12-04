@@ -77,7 +77,8 @@ def write_java_commands(java_path, jar_path):
 
 
 def write_qsub(time, control_names, error_log_path, out_log_path, reps, qsub_outfile, control_path):
-	out = open(qsub_outfile, 'w')
+	outfile = 'run.' + qsub_outfile + '.sh'
+	out = open(outfile, 'w')
 	out.write('#!/bin/bash\n')
 	out.write('\n')
 	for i in control_names:
@@ -100,7 +101,7 @@ def write_extract_treestat(java_path, jar_path):
 	
 def write_parser(time, control_names, error_log_path, out_log_path, qsub_outfile, control_path):
 #qsub -l mem=8G -l arch=intel* -l h_rt=8:00:00 -N $n1 -e $dir/$n1.err -o $dir/$n2.o -cwd extract_treestats.sh $n1
-	outfile = 'parse.' + qsub_outfile
+	outfile = 'extract.' + qsub_outfile +'.sh'
 	parser_out = open(outfile, 'w')
 	parser_out.write('#!/bin/bash\n')
 	parser_out.write('\n')
@@ -110,6 +111,16 @@ def write_parser(time, control_names, error_log_path, out_log_path, qsub_outfile
 		parser_out.write('qsub -l mem=8G -l arch=intel* -l h_rt=%s:00:00 -N %s -e %s/%s.parse.e -o %s/%s.parse.o -cwd extract_treestats.sh %s\n'
 	% (time, name, error_log_path, name, out_log_path, name, control_path + '/' + folder + '/' + name))
 	parser_out.close()
+
+def write_formatter(qsub_outfile, control_path):
+	outfile = 'format.' + qsub_outfile + '.sh'
+	format_out = open(outfile, 'w')
+	format_out.write('#!/bin/bash\n')
+	format_out.write('\n')
+	format_out.write('ls %s/m*/m*.trStat.*/* > simlist.txt\n' % (control_path))
+	format_out.write('\n')
+	format_out.write('python combine_treestats.py -i simlist.txt -o %s.treestats.txt\n' % (qsub_outfile))
+	format_out.close()
 	
 
 parser = OptionParser()
@@ -133,7 +144,7 @@ parser.add_option('-w', '--write', help='Write simulated sequence data to file',
 parser.add_option('-x', '--execute', help='Submit the created array jobs to the cluster. Warning: this will overwrite simulation results located in -d with the same name ', dest='run_job', default=False, action='store_true')
 parser.add_option('-o', '--stdout', help='Path to write stdout from program', dest='model_out') # make this a mandatory requirement or defualt to current directory
 parser.add_option('-e', '--error', help='Path to write errors files from qsub job', dest='error_out')
-parser.add_option('-f', '--file', help='Name of the qsub  batch submission script that is output', dest='qsub_file', default='sub.sh' )
+parser.add_option('-f', '--file', help='Prefix name of the qsub  batch submission script that is output', dest='qsub_file', default='sub.sh' )
 parser.add_option('-H','--hours', help='Number of hours for the qsub job', dest='job_time')
 (opts, args) = parser.parse_args()
 
@@ -182,6 +193,8 @@ def main():
 	write_extract_treestat(opts.java_path, opts.jar_path)
 	
 	write_parser(opts.job_time, control_file_names, opts.error_out, opts.model_out, opts.qsub_file, opts.control_path)
+	
+	write_formatter(opts.qsub_file, opts.control_path)
 	
 	if opts.run_job: # submit jobs if the -x flag is included
 		qsub_file = opts.qsub_file
